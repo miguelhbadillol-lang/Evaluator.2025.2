@@ -1,4 +1,7 @@
-﻿namespace Evaluator.Core;
+﻿// [CHANGED] Necesario para parsear decimales con punto de forma estable
+using System.Globalization;
+
+namespace Evaluator.Core;
 
 public class ExpressionEvaluator
 {
@@ -10,17 +13,45 @@ public class ExpressionEvaluator
 
     private static string InfixToPostfix(string infix)
     {
+        // [CHANGED] Normalizar: quitar espacios y convertir coma a punto (por si el usuario escribe 3,14)
+        var s = infix.Replace(" ", "").Replace(',', '.'); // [CHANGED]
+
         var stack = new Stack<char>();
         var postfix = string.Empty;
-        foreach (char item in infix)
+
+        // [CHANGED] Acumulador para números multi-dígito y con punto decimal
+        string number = "";              // [CHANGED]
+        bool numberHasDot = false;       // [CHANGED]
+
+        foreach (char item in s)
         {
+            // [CHANGED] Construir el número mientras vengan dígitos o '.'
+            if (char.IsDigit(item) || item == '.')        // [CHANGED]
+            {
+                if (item == '.')                          // [CHANGED]
+                {
+                    if (numberHasDot) throw new Exception("Invalid number format."); // [CHANGED]
+                    numberHasDot = true;                 // [CHANGED]
+                }
+                number += item;                           // [CHANGED]
+                continue;                                 // [CHANGED]
+            }
+
+            // [CHANGED] Si veníamos armando un número, cerrarlo y agregarlo como token
+            if (number.Length > 0)                        // [CHANGED]
+            {
+                postfix += number + " ";                  // [CHANGED] separar tokens con espacio
+                number = "";                              // [CHANGED]
+                numberHasDot = false;                     // [CHANGED]
+            }
+
             if (IsOperator(item))
             {
                 if (item == ')')
                 {
                     do
                     {
-                        postfix += stack.Pop();
+                        postfix += stack.Pop() + " ";     // [CHANGED] añadir espacio tras operador
                     } while (stack.Peek() != '(');
                     stack.Pop();
                 }
@@ -34,7 +65,7 @@ public class ExpressionEvaluator
                         }
                         else
                         {
-                            postfix += stack.Pop();
+                            postfix += stack.Pop() + " "; // [CHANGED] añadir espacio tras operador
                             stack.Push(item);
                         }
                     }
@@ -46,14 +77,23 @@ public class ExpressionEvaluator
             }
             else
             {
-                postfix += item;
+                throw new Exception("Invalid expression.");
             }
         }
+
+        // [CHANGED] Último número pendiente (si la expresión termina en número)
+        if (number.Length > 0)                            // [CHANGED]
+        {
+            postfix += number + " ";                      // [CHANGED]
+        }
+
+        // Vaciar pila
         while (stack.Count > 0)
         {
-            postfix += stack.Pop();
+            postfix += stack.Pop() + " ";                 // [CHANGED] añadir espacio tras operador
         }
-        return postfix;
+
+        return postfix.Trim();                            // [CHANGED]
     }
 
     private static bool IsOperator(char item) => item is '^' or '/' or '*' or '%' or '+' or '-' or '(' or ')';
@@ -79,17 +119,21 @@ public class ExpressionEvaluator
     private static double Calulate(string postfix)
     {
         var stack = new Stack<double>();
-        foreach (char item in postfix)
+
+        // [CHANGED] En lugar de leer char a char, procesamos tokens separados por espacio
+        foreach (var token in postfix.Split(' ', StringSplitOptions.RemoveEmptyEntries)) // [CHANGED]
         {
-            if (IsOperator(item))
+            // [CHANGED] Un token de 1 char que sea operador se procesa como operador binario
+            if (token.Length == 1 && IsOperator(token[0]) && token[0] != '(' && token[0] != ')') // [CHANGED]
             {
                 var op2 = stack.Pop();
                 var op1 = stack.Pop();
-                stack.Push(Calulate(op1, item, op2));
+                stack.Push(Calulate(op1, token[0], op2));
             }
             else
             {
-                stack.Push(Convert.ToDouble(item.ToString()));
+                // [CHANGED] Parseo robusto de números (incluye decimales con '.')
+                stack.Push(double.Parse(token, NumberStyles.Float, CultureInfo.InvariantCulture)); // [CHANGED]
             }
         }
         return stack.Peek();
@@ -102,6 +146,7 @@ public class ExpressionEvaluator
         '^' => Math.Pow(op1, op2),
         '+' => op1 + op2,
         '-' => op1 - op2,
+        '%' => op1 % op2,
         _ => throw new Exception("Invalid expression."),
     };
 }
