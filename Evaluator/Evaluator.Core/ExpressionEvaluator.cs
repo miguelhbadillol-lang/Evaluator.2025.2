@@ -1,4 +1,4 @@
-﻿// [CHANGED] Necesario para parsear decimales con punto de forma estable
+﻿
 using System.Globalization;
 
 namespace Evaluator.Core;
@@ -13,36 +13,35 @@ public class ExpressionEvaluator
 
     private static string InfixToPostfix(string infix)
     {
-        // [CHANGED] Normalizar: quitar espacios y convertir coma a punto (por si el usuario escribe 3,14)
-        var s = infix.Replace(" ", "").Replace(',', '.'); // [CHANGED]
+        var s = infix.Replace(" ", "").Replace(',', '.'); 
 
         var stack = new Stack<char>();
         var postfix = string.Empty;
 
-        // [CHANGED] Acumulador para números multi-dígito y con punto decimal
-        string number = "";              // [CHANGED]
-        bool numberHasDot = false;       // [CHANGED]
+        
+        string number = "";              
+        bool numberHasDot = false;       
 
         foreach (char item in s)
         {
-            // [CHANGED] Construir el número mientras vengan dígitos o '.'
-            if (char.IsDigit(item) || item == '.')        // [CHANGED]
+            
+            if (char.IsDigit(item) || item == '.')        
             {
-                if (item == '.')                          // [CHANGED]
+                if (item == '.')                         
                 {
-                    if (numberHasDot) throw new Exception("Invalid number format."); // [CHANGED]
-                    numberHasDot = true;                 // [CHANGED]
+                    if (numberHasDot) throw new Exception("Invalid number format."); 
+                    numberHasDot = true;                 
                 }
-                number += item;                           // [CHANGED]
-                continue;                                 // [CHANGED]
+                number += item;                          
+                continue;                                 
             }
 
-            // [CHANGED] Si veníamos armando un número, cerrarlo y agregarlo como token
-            if (number.Length > 0)                        // [CHANGED]
+           
+            if (number.Length > 0)                        
             {
-                postfix += number + " ";                  // [CHANGED] separar tokens con espacio
-                number = "";                              // [CHANGED]
-                numberHasDot = false;                     // [CHANGED]
+                postfix += number + " ";                 
+                number = "";                              
+                numberHasDot = false;                     
             }
 
             if (IsOperator(item))
@@ -51,7 +50,7 @@ public class ExpressionEvaluator
                 {
                     do
                     {
-                        postfix += stack.Pop() + " ";     // [CHANGED] añadir espacio tras operador
+                        postfix += stack.Pop() + " ";     
                     } while (stack.Peek() != '(');
                     stack.Pop();
                 }
@@ -65,7 +64,7 @@ public class ExpressionEvaluator
                         }
                         else
                         {
-                            postfix += stack.Pop() + " "; // [CHANGED] añadir espacio tras operador
+                            postfix += stack.Pop() + " "; 
                             stack.Push(item);
                         }
                     }
@@ -81,19 +80,19 @@ public class ExpressionEvaluator
             }
         }
 
-        // [CHANGED] Último número pendiente (si la expresión termina en número)
-        if (number.Length > 0)                            // [CHANGED]
+        
+        if (number.Length > 0)                           
         {
-            postfix += number + " ";                      // [CHANGED]
+            postfix += number + " ";                     
         }
 
-        // Vaciar pila
+        
         while (stack.Count > 0)
         {
-            postfix += stack.Pop() + " ";                 // [CHANGED] añadir espacio tras operador
+            postfix += stack.Pop() + " ";                
         }
 
-        return postfix.Trim();                            // [CHANGED]
+        return postfix.Trim();                           
     }
 
     private static bool IsOperator(char item) => item is '^' or '/' or '*' or '%' or '+' or '-' or '(' or ')';
@@ -120,11 +119,11 @@ public class ExpressionEvaluator
     {
         var stack = new Stack<double>();
 
-        // [CHANGED] En lugar de leer char a char, procesamos tokens separados por espacio
-        foreach (var token in postfix.Split(' ', StringSplitOptions.RemoveEmptyEntries)) // [CHANGED]
+       
+        foreach (var token in postfix.Split(' ', StringSplitOptions.RemoveEmptyEntries)) 
         {
-            // [CHANGED] Un token de 1 char que sea operador se procesa como operador binario
-            if (token.Length == 1 && IsOperator(token[0]) && token[0] != '(' && token[0] != ')') // [CHANGED]
+            
+            if (token.Length == 1 && IsOperator(token[0]) && token[0] != '(' && token[0] != ')') 
             {
                 var op2 = stack.Pop();
                 var op1 = stack.Pop();
@@ -132,8 +131,8 @@ public class ExpressionEvaluator
             }
             else
             {
-                // [CHANGED] Parseo robusto de números (incluye decimales con '.')
-                stack.Push(double.Parse(token, NumberStyles.Float, CultureInfo.InvariantCulture)); // [CHANGED]
+                
+                stack.Push(double.Parse(token, NumberStyles.Float, CultureInfo.InvariantCulture)); 
             }
         }
         return stack.Peek();

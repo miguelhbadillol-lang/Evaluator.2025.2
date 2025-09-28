@@ -23,7 +23,7 @@ namespace Evaluator.UI.Avalonia.Views
             AvaloniaXamlLoader.Load(this);
         }
 
-        // --- Botones numéricos y operadores (incluye ^, (, ), ., +, -, *, /) ---
+        
         public void OnKeyClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -43,7 +43,7 @@ namespace Evaluator.UI.Avalonia.Views
             catch { /* evita cierre de la app si algo falla */ }
         }
 
-        // --- Delete: borrar último carácter ---
+        // --- 
         public void OnDelete(object? sender, RoutedEventArgs e)
         {
             try
@@ -60,7 +60,7 @@ namespace Evaluator.UI.Avalonia.Views
             catch { }
         }
 
-        // --- Clear: limpiar todo ---
+        
         public void OnClear(object? sender, RoutedEventArgs e)
         {
             try
@@ -72,7 +72,7 @@ namespace Evaluator.UI.Avalonia.Views
             catch { }
         }
 
-        // --- Evaluar expresión ---
+        
         public void OnEquals(object? sender, RoutedEventArgs e)
         {
             try
